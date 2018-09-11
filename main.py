@@ -11,12 +11,14 @@ CERTBOT_SERVER = 'https://acme-v02.api.letsencrypt.org/directory'
 # Temp dir of Lambda runtime
 CERTBOT_DIR = '/tmp/certbot'
 
+
 def rm_tmp_dir():
     if os.path.exists(CERTBOT_DIR):
         try:
             shutil.rmtree(CERTBOT_DIR)
         except NotADirectoryError:
             os.remove(CERTBOT_DIR)
+
 
 def obtain_certs(email, domains):
     certbot_args = [
@@ -25,16 +27,30 @@ def obtain_certs(email, domains):
         '--work-dir', CERTBOT_DIR,
         '--logs-dir', CERTBOT_DIR,
 
-        'certonly',                             # Obtain a cert but don't install it
-        '--non-interactive',                    # Run in non-interactive mode
-        '--agree-tos',                          # Agree to the terms of service
-        '--email', email,                       # Email
-        '--dns-route53',                        # Use dns challenge with route53
+        # Obtain a cert but don't install it
+        'certonly',
+
+        # Run in non-interactive mode
+        '--non-interactive',
+
+        # Agree to the terms of service
+        '--agree-tos',
+
+        # Email of domain administrator
+        '--email', email,
+
+        # Use dns challenge with route53
+        '--dns-route53',
         '--preferred-challenges', 'dns-01',
-        '--server', CERTBOT_SERVER,             # Use this server instead of default acme-v01
-        '--domains', domains,                   # Domains to provision certs for (comma separated)
+
+        # Use this server instead of default acme-v01
+        '--server', CERTBOT_SERVER,
+
+        # Domains to provision certs for (comma separated)
+        '--domains', domains,
     ]
     return certbot.main.main(certbot_args)
+
 
 # /tmp/certbot
 # ├── live
@@ -55,6 +71,7 @@ def upload_certs(s3_bucket, s3_prefix):
             print(f'Uploading: {local_path} => s3://{s3_bucket}/{s3_key}')
             client.upload_file(local_path, s3_bucket, s3_key)
 
+
 def guarded_handler(event, context):
     # Input parameters
     email = event['email']
@@ -66,6 +83,7 @@ def guarded_handler(event, context):
     upload_certs(s3_bucket, s3_prefix)
 
     return 'Certificates obtained and uploaded successfully.'
+
 
 def lambda_handler(event, context):
     try:
