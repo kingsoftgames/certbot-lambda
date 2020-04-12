@@ -20,7 +20,7 @@ def rm_tmp_dir():
             os.remove(CERTBOT_DIR)
 
 
-def obtain_certs(email, domains):
+def obtain_certs(emails, domains):
     certbot_args = [
         # Override directory paths so script doesn't have to be run as root
         '--config-dir', CERTBOT_DIR,
@@ -36,8 +36,8 @@ def obtain_certs(email, domains):
         # Agree to the terms of service
         '--agree-tos',
 
-        # Email of domain administrator
-        '--email', email,
+        # Email of domain administrators
+        '--email', emails,
 
         # Use dns challenge with route53
         '--dns-route53',
@@ -60,8 +60,8 @@ def obtain_certs(email, domains):
 # │       ├── chain.pem
 # │       ├── fullchain.pem
 # │       └── privkey.pem
-def upload_certs(s3_bucket, s3_prefix):
-    client = boto3.client('s3')
+def upload_certs(s3_bucket, s3_prefix, s3_region):
+    client = boto3.client('s3', s3_region)
     cert_dir = os.path.join(CERTBOT_DIR, 'live')
     for dirpath, _dirnames, filenames in os.walk(cert_dir):
         for filename in filenames:
@@ -73,14 +73,15 @@ def upload_certs(s3_bucket, s3_prefix):
 
 
 def guarded_handler(event, context):
-    # Input parameters
-    email = event['email']
-    domains = event['domains']
-    s3_bucket = event['s3_bucket']  # The S3 bucket to publish certificates
-    s3_prefix = event['s3_prefix']  # The S3 key prefix to publish certificates
+    # Input parameters from environment variables
+    emails = os.getenv('EMAILS')
+    domains = os.getenv('DOMAINS')
+    s3_bucket = os.getenv('S3_BUCKET')  # The S3 bucket to publish certificates
+    s3_prefix = os.getenv('S3_PREFIX')  # The S3 key prefix to publish certificates
+    s3_region = os.getenv('S3_REGION')  # The AWS region of the S3 bucket
 
-    obtain_certs(email, domains)
-    upload_certs(s3_bucket, s3_prefix)
+    obtain_certs(emails, domains)
+    upload_certs(s3_bucket, s3_prefix, s3_region)
 
     return 'Certificates obtained and uploaded successfully.'
 
