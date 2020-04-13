@@ -37,6 +37,12 @@ variable "upload_s3" {
 # These parameters have reasonable defaults.
 # ---------------------------------------------------------------------------------------------------------------------
 
+variable "lambda_description" {
+  description = "Description for the lambda function."
+  type        = string
+  default     = ""
+}
+
 variable "lambda_runtime" {
   description = "Name of the runtime for lambda function."
   type        = string
@@ -53,4 +59,10 @@ variable "lambda_timeout" {
   description = "The amount of time that lambda function has to run in seconds."
   type        = number
   default     = 300
+}
+
+variable "cron_expression" {
+  description = "A cron expression for CloudWatch event rule that triggers lambda. Default is 00:00:00+0800 at 1st day of every month."
+  type        = string
+  default     = "0 16 L * ? *"
 }

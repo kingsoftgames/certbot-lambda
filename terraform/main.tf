@@ -112,10 +112,37 @@ resource "aws_lambda_function" "certbot" {
   handler          = local.lambda_handler
   filename         = local.lambda_filename
   source_code_hash = local.lambda_hash
+  description      = local.lambda_description
 
   environment {
     variables = local.aws_partition == "aws-cn" ? local.lambda_environment_cn : local.lambda_environment
   }
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# CLOUDWATCH EVENTS RULE THAT TRIGGERS ON A SCHEDULE
+# ---------------------------------------------------------------------------------------------------------------------
+
+resource "aws_cloudwatch_event_rule" "schedule" {
+  name_prefix         = local.name_prefix
+  description         = "Triggers lambda function ${aws_lambda_function.certbot.function_name} on a regular schedule."
+  schedule_expression = "cron(${var.cron_expression})"
+}
+
+resource "aws_cloudwatch_event_target" "schedule" {
+  rule = aws_cloudwatch_event_rule.schedule.name
+  arn  = aws_lambda_function.certbot.arn
+  # Since certbot lambda function gets all input from environment variables,
+  # an empty JSON object is good enough.
+  input = "{}"
+}
+
+resource "aws_lambda_permission" "schedule" {
+  source_arn    = aws_cloudwatch_event_rule.schedule.arn
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.certbot.function_name
+  # Note: both Global/China regions use "events.amazonaws.com" as service ID of CloudWatch Events.
+  principal = "events.amazonaws.com"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -132,13 +159,18 @@ locals {
 
   certbot_version = "1.3.0"
 
+  certbot_emails  = join(",", var.emails)
+  certbot_domains = join(",", var.domains)
+
   lambda_handler  = "main.lambda_handler"
   lambda_filename = "../certbot/certbot-${local.certbot_version}.zip"
   lambda_hash     = filebase64sha256(local.lambda_filename)
 
+  lambda_description = var.lambda_description != "" ? var.lambda_description : "Run certbot for ${local.certbot_domains}"
+
   lambda_environment = {
-    EMAILS    = join(",", var.emails)
-    DOMAINS   = join(",", var.domains)
+    EMAILS    = local.certbot_emails
+    DOMAINS   = local.certbot_domains
     S3_BUCKET = var.upload_s3.bucket
     S3_PREFIX = var.upload_s3.prefix
     S3_REGION = var.upload_s3.region
