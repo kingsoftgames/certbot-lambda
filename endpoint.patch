@@ -1,0 +1,28 @@
+--- a/certbot/venv/lib/python3.6/site-packages/certbot_dns_route53/_internal/dns_route53.py	2020-12-22 15:49:51.339999914 +1300
++++ b/certbot/venv/lib/python3.6/site-packages/certbot_dns_route53/_internal/dns_route53.py	2020-12-23 11:00:54.200000000 +1300
+@@ -2,6 +2,7 @@
+ import collections
+ import logging
+ import time
++import os
+
+ import boto3
+ from botocore.exceptions import ClientError
+@@ -36,9 +37,16 @@
+                    "DNS).")
+     ttl = 10
+
++    # Optionally override Amazon Route53 region and endpoint
++    # This is useful in AWS China Regions, use the following:
++    # AWS_ROUTE53_REGION=cn-northwest-1
++    # AWS_ROUTE53_ENDPOINT=https://route53.amazonaws.com.cn
++    region   = os.getenv("AWS_ROUTE53_REGION")
++    endpoint = os.getenv("AWS_ROUTE53_ENDPOINT")
++
+     def __init__(self, *args, **kwargs):
+         super(Authenticator, self).__init__(*args, **kwargs)
+-        self.r53 = boto3.client("route53")
++        self.r53 = boto3.client("route53", region_name=self.region, endpoint_url=self.endpoint)
+         self._resource_records = collections.defaultdict(list) # type: DefaultDict[str, List[Dict[str, str]]]
+
+     def more_info(self):  # pylint: disable=missing-function-docstring
