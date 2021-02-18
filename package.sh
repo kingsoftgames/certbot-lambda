@@ -3,7 +3,7 @@
 umask 022
 
 set -e
-declare -r python='python3.6'
+declare -r python='python3.8'
 
 declare -r script_dir=$(readlink -f "$(dirname "${BASH_SOURCE[0]}")")
 declare -r venv="${script_dir}/certbot/venv"
@@ -28,15 +28,13 @@ setup_venv() {
     _msg "Setting up virtualenv and installing certbot"
     ${python} -m venv "${venv}"
     source "${venv}/bin/activate"
+    pip install -U pip wheel
     pip install -q -r "${script_dir}/requirements.txt"
 }
 
 apply_patch() {
     _msg "Patching"
-    (
-        cd "${script_dir}" || exit 1
-        patch -p1 < endpoint.patch
-    )
+    patch -d "${script_dir}" -N -p1 < endpoint.patch
 }
 
 package() {
@@ -61,6 +59,7 @@ elif [[ -n $1 ]] ; then
     exit 1
 fi
 
+rm -rf "${script_dir}/certbot"
 mkdir -p "${script_dir}/certbot"
 rm -f "${package}"
 setup_venv

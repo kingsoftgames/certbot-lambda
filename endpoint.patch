@@ -1,5 +1,5 @@
---- a/certbot/venv/lib/python3.6/site-packages/certbot_dns_route53/_internal/dns_route53.py	2020-12-22 15:49:51.339999914 +1300
-+++ b/certbot/venv/lib/python3.6/site-packages/certbot_dns_route53/_internal/dns_route53.py	2020-12-23 11:00:54.200000000 +1300
+--- a/certbot/venv/lib/python3.8/site-packages/certbot_dns_route53/_internal/dns_route53.py	2020-12-22 15:49:51.339999914 +1300
++++ b/certbot/venv/lib/python3.8/site-packages/certbot_dns_route53/_internal/dns_route53.py	2020-12-23 11:00:54.200000000 +1300
 @@ -2,6 +2,7 @@
  import collections
  import logging
