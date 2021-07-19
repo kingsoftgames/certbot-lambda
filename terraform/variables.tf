@@ -8,10 +8,6 @@ variable "lambda_name" {
   type        = string
 }
 
-variable "hosted_zone_id" {
-  description = "ID of the Route53 hosted zone, where domains are hosted in."
-}
-
 variable "domains" {
   description = "A list of domains to provision certificates. Can contain wildcard domains like *.example.com"
   type        = list(string)
@@ -36,6 +32,37 @@ variable "upload_s3" {
 # OPTIONAL PARAMETERS
 # These parameters have reasonable defaults.
 # ---------------------------------------------------------------------------------------------------------------------
+variable "hosted_zone_id" {
+  description = "ID of the Route53 hosted zone, where domains are hosted in."
+  type        = string
+  default     = ""
+}
+
+variable "create_aws_route53_iam_role" {
+  description = "Controls if route53 iam role for lambda should be created. If set value to false, the environment of credentials could be provided in `lambda_custom_environment`"
+  type        = bool
+  default     = true
+}
+
+variable "create_aws_s3_iam_role" {
+  description = "Controls if route53 iam role for lambda should be created. If set value to false, the environment of credentials could be provided in `lambda_custom_environment`"
+  type        = bool
+  default     = true
+}
+
+# https://certbot.eff.org/docs/using.html#dns-plugins
+variable "certbot_dns_plugin" {
+  description = "The dns plugin for certbot."
+  type        = string
+  default     = "dns-route53"
+}
+
+variable "lambda_custom_environment" {
+  description = "The custom environment in Lambda. (e.g.) `TENCENTCLOUD_SECRET_ID`, `TENCENTCLOUD_SECRET_KEY`"
+  sensitive   = true
+  type        = map(string)
+  default     = {}
+}
 
 variable "lambda_description" {
   description = "Description for the lambda function."
