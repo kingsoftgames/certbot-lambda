@@ -11,6 +11,11 @@ Inspired by [Deploying EFF's Certbot in AWS Lambda](https://arkadiyt.com/2018/01
 - Works with CloudWatch Scheduled Events for certificate renewal.
 - Use Terraform to deploy to AWS (See [terraform folder](terraform)).
 
+## How to archive zip file for lambda function
+```bash
+./package.sh
+```
+
 ## How to update certbot version
 
 - Source virtualenv
