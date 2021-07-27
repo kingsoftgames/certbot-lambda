@@ -105,6 +105,29 @@ resource "aws_iam_role" "lambda" {
 # LAMBDA
 # ---------------------------------------------------------------------------------------------------------------------
 
+# https://github.com/hashicorp/terraform/issues/8344
+resource "null_resource" "lambda" {
+  triggers = {
+    main         = filebase64sha256("${path.module}/../main.py")
+    requirements = filebase64sha256("${path.module}/../requirements.txt")
+  }
+
+  provisioner "local-exec" {
+    command = "${path.module}/../package.sh"
+  }
+}
+
+data "archive_file" "lambda" {
+  type        = "zip"
+  source_dir  = "${path.module}/../certbot/archive"
+  output_path = local.lambda_filename
+  # https://github.com/hashicorp/terraform-provider-archive/issues/62
+  excludes = ["__pycache__"]
+
+  depends_on = [null_resource.lambda]
+}
+
+
 resource "aws_lambda_function" "certbot" {
   function_name    = var.lambda_name
   role             = aws_iam_role.lambda.arn
@@ -113,15 +136,11 @@ resource "aws_lambda_function" "certbot" {
   timeout          = var.lambda_timeout
   handler          = local.lambda_handler
   filename         = local.lambda_filename
-  source_code_hash = local.lambda_hash
+  source_code_hash = data.archive_file.lambda.output_base64sha256
   description      = local.lambda_description
 
   environment {
     variables = local.lambda_environment
-  }
-  # Ignore changes in path that happen when different people apply. We have source_code_hash to track actual code changes.
-  lifecycle {
-    ignore_changes = [filename]
   }
 }
 
@@ -163,16 +182,12 @@ locals {
   aws_partition  = data.aws_arn.current.partition
   aws_account_id = data.aws_caller_identity.current.account_id
 
-  certbot_version = "1.17.0"
-
   certbot_emails  = join(",", var.emails)
   certbot_domains = join(",", var.domains)
 
-  lambda_handler  = "main.lambda_handler"
-  lambda_filename = length(var.lambda_filename) > 0 ? var.lambda_filename : "${path.module}/../certbot/certbot-${local.certbot_version}.zip"
-  lambda_hash     = filebase64sha256(local.lambda_filename)
-
+  lambda_handler     = "main.lambda_handler"
   lambda_description = var.lambda_description != "" ? var.lambda_description : "Run certbot for ${local.certbot_domains}"
+  lambda_filename    = "${path.module}/../certbot/certbot.zip"
 
   lambda_environment = merge({
     EMAILS     = local.certbot_emails
