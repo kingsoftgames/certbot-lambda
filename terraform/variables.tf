@@ -70,6 +70,12 @@ variable "lambda_description" {
   default     = ""
 }
 
+variable "lambda_filename" {
+  description = "The Filemame of the runtime for lambda function."
+  type        = string
+  default     = ""
+}
+
 variable "lambda_runtime" {
   description = "Name of the runtime for lambda function."
   type        = string
