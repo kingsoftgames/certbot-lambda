@@ -1,9 +1,9 @@
 terraform {
   # The configuration for this backend will be filled in by terragrunt
   backend "s3" {}
-  required_version = ">= 0.12"
+  required_version = ">= 0.15"
   required_providers {
-    aws = ">= 2.50"
+    aws = ">= 3.48.0"
   }
 }
 
@@ -56,6 +56,7 @@ data "aws_iam_policy_document" "s3" {
 
 # Allow certbot to use dns challenges with route53
 resource "aws_iam_role_policy" "route53" {
+  count  = var.create_aws_route53_iam_role ? 1 : 0
   name   = "certbot-dns-route53"
   role   = aws_iam_role.lambda.id
   policy = data.aws_iam_policy_document.route53.json
@@ -63,6 +64,7 @@ resource "aws_iam_role_policy" "route53" {
 
 # Allow uploading generated certs to S3
 resource "aws_iam_role_policy" "s3" {
+  count  = var.create_aws_s3_iam_role ? 1 : 0
   name   = "certbot-upload-s3"
   role   = aws_iam_role.lambda.id
   policy = data.aws_iam_policy_document.s3.json
@@ -115,7 +117,11 @@ resource "aws_lambda_function" "certbot" {
   description      = local.lambda_description
 
   environment {
-    variables = local.aws_partition == "aws-cn" ? local.lambda_environment_cn : local.lambda_environment
+    variables = local.lambda_environment
+  }
+  # Ignore changes in path that happen when different people apply. We have source_code_hash to track actual code changes.
+  lifecycle {
+    ignore_changes = [filename]
   }
 }
 
@@ -157,28 +163,23 @@ locals {
   aws_partition  = data.aws_arn.current.partition
   aws_account_id = data.aws_caller_identity.current.account_id
 
-  certbot_version = "1.3.0"
+  certbot_version = "1.17.0"
 
   certbot_emails  = join(",", var.emails)
   certbot_domains = join(",", var.domains)
 
   lambda_handler  = "main.lambda_handler"
-  lambda_filename = "${path.module}/../certbot/certbot-${local.certbot_version}.zip"
+  lambda_filename = length(var.lambda_filename) > 0 ? var.lambda_filename : "${path.module}/../certbot/certbot-${local.certbot_version}.zip"
   lambda_hash     = filebase64sha256(local.lambda_filename)
 
   lambda_description = var.lambda_description != "" ? var.lambda_description : "Run certbot for ${local.certbot_domains}"
 
-  lambda_environment = {
-    EMAILS    = local.certbot_emails
-    DOMAINS   = local.certbot_domains
-    S3_BUCKET = var.upload_s3.bucket
-    S3_PREFIX = var.upload_s3.prefix
-    S3_REGION = var.upload_s3.region
-  }
-
-  # See dns_route53.py
-  lambda_environment_cn = merge(local.lambda_environment, {
-    AWS_ROUTE53_REGION   = "cn-northwest-1"
-    AWS_ROUTE53_ENDPOINT = "https://route53.amazonaws.com.cn"
-  })
+  lambda_environment = merge({
+    EMAILS     = local.certbot_emails
+    DOMAINS    = local.certbot_domains
+    DNS_PLUGIN = var.certbot_dns_plugin
+    S3_BUCKET  = var.upload_s3.bucket
+    S3_PREFIX  = var.upload_s3.prefix
+    S3_REGION  = var.upload_s3.region
+  }, var.lambda_custom_environment)
 }

@@ -20,7 +20,7 @@ def rm_tmp_dir():
             os.remove(CERTBOT_DIR)
 
 
-def obtain_certs(emails, domains):
+def obtain_certs(emails, domains, dns_plugin):
     certbot_args = [
         # Override directory paths so script doesn't have to be run as root
         '--config-dir', CERTBOT_DIR,
@@ -39,8 +39,8 @@ def obtain_certs(emails, domains):
         # Email of domain administrators
         '--email', emails,
 
-        # Use dns challenge with route53
-        '--dns-route53',
+        # Use dns challenge with dns plugin
+        '--authenticator', dns_plugin,
         '--preferred-challenges', 'dns-01',
 
         # Use this server instead of default acme-v01
@@ -76,11 +76,12 @@ def guarded_handler(event, context):
     # Input parameters from environment variables
     emails = os.getenv('EMAILS')
     domains = os.getenv('DOMAINS')
+    dns_plugin = os.getenv('DNS_PLUGIN')
     s3_bucket = os.getenv('S3_BUCKET')  # The S3 bucket to publish certificates
     s3_prefix = os.getenv('S3_PREFIX')  # The S3 key prefix to publish certificates
     s3_region = os.getenv('S3_REGION')  # The AWS region of the S3 bucket
 
-    obtain_certs(emails, domains)
+    obtain_certs(emails, domains, dns_plugin)
     upload_certs(s3_bucket, s3_prefix, s3_region)
 
     return 'Certificates obtained and uploaded successfully.'
