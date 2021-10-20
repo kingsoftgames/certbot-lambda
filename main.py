@@ -73,13 +73,15 @@ def upload_certs(s3_bucket, s3_prefix, s3_region):
 
 
 def guarded_handler(event, context):
-    # Input parameters from environment variables
-    emails = os.getenv('EMAILS')
-    domains = os.getenv('DOMAINS')
+    # Input parameters from env vars
     dns_plugin = os.getenv('DNS_PLUGIN')
-    s3_bucket = os.getenv('S3_BUCKET')  # The S3 bucket to publish certificates
-    s3_prefix = os.getenv('S3_PREFIX')  # The S3 key prefix to publish certificates
-    s3_region = os.getenv('S3_REGION')  # The AWS region of the S3 bucket
+    
+    # Input parameters from event payload
+    emails = event['emails']
+    domains = event['domains']
+    s3_bucket = event['s3_bucket']  # The S3 bucket to publish certificates
+    s3_prefix = event['s3_prefex']  # The S3 key prefix to publish certificates
+    s3_region = event['s3_region']  # The AWS region of the S3 bucket
 
     obtain_certs(emails, domains, dns_plugin)
     upload_certs(s3_bucket, s3_prefix, s3_region)
