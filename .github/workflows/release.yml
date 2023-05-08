@@ -46,8 +46,8 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: certbot/certbot-1.17.0.zip
-          asset_name: mything
+          file: certbot/certbot.zip
+          asset_name: certbot.zip
           tag: ${{ github.ref }}
           overwrite: true
           body: "This is my release text"

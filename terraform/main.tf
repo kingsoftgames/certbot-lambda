@@ -169,7 +169,7 @@ locals {
   certbot_domains = join(",", var.domains)
 
   lambda_handler  = "main.lambda_handler"
-  lambda_filename = length(var.lambda_filename) > 0 ? var.lambda_filename : "${path.module}/../certbot/certbot-${local.certbot_version}.zip"
+  lambda_filename = length(var.lambda_filename) > 0 ? var.lambda_filename : "${path.module}/../certbot/certbot.zip"
   lambda_hash     = filebase64sha256(local.lambda_filename)
 
   lambda_description = var.lambda_description != "" ? var.lambda_description : "Run certbot for ${local.certbot_domains}"
