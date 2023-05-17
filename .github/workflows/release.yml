@@ -48,6 +48,6 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: certbot/certbot.zip
           asset_name: certbot.zip
-          tag: ${{ github.ref }}
+          tag: ${{ steps.tag.outputs.new_tag }}
           overwrite: true
           body: "This is my release text"
