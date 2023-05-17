@@ -36,6 +36,7 @@ jobs:
 
 
       - name: Bump version and push tag
+        id: bumpVersion
         uses: anothrNick/github-tag-action@1.61.0 # Don't use @master unless you're happy to test the latest version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -48,6 +49,6 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: certbot/certbot.zip
           asset_name: certbot.zip
-          tag: ${{ steps.tag.outputs.new_tag }}
+          tag: ${{ steps.bumpVersion.outputs.new_tag }}
           overwrite: true
           body: "This is my release text"
