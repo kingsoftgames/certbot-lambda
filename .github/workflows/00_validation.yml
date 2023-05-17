@@ -1,10 +1,11 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: Create release
+name: Validate Code & Build Package
 on:
   push:
-    branches: [ master ]
+    branches-ignore:
+      - master
 
 jobs:
   build:
@@ -30,25 +31,3 @@ jobs:
       - name: Run build
         run: |
           bash package.sh
-      # - name: Test with pytest
-      #   run: |
-      #     pytest
-
-
-      - name: Bump version and push tag
-        id: bumpVersion
-        uses: anothrNick/github-tag-action@1.61.0 # Don't use @master unless you're happy to test the latest version
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WITH_V: true
-
-
-      - name: Upload binaries to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: certbot/certbot.zip
-          asset_name: certbot.zip
-          tag: ${{ steps.bumpVersion.outputs.new_tag }}
-          overwrite: true
-          body: "This is my release text"
